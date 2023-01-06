@@ -11,6 +11,7 @@ class Server:
     def __init__(self,config):
         self.config=config
         self.clients=self.clients_init()
+        self.device=torch.device(config["device"])
         self.model=self.model_init()
         self.next_model=self.model*(1-config["C"])
     def load_data(self,val_data):
@@ -18,7 +19,7 @@ class Server:
         self.criterion=torch.nn.CrossEntropyLoss()
     def model_init(self):
         if self.config["model"]=="mlp_mnist":
-            return MLP_MNIST()
+            return MLP_MNIST().to(self.device)
     def clients_init(self):
         clients=[]
         for i in range(self.config["K"]):

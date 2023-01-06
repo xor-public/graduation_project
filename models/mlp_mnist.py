@@ -17,20 +17,24 @@ class MLP_MNIST(nn.Module):
         return x
     
     def train_one_epoch(self, train_loader, optimizer, criterion):
+        device = self.parameters().__next__().device
         self.train()
         for batch_idx, (data, target) in enumerate(train_loader):
             optimizer.zero_grad()
+            data, target = data.to(device), target.to(device)
             output = self(data)
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
     
     def validate(self, val_loader, criterion):
+        device = self.parameters().__next__().device
         self.eval()
         val_loss = 0
         correct = 0
         with torch.no_grad():
             for data, target in val_loader:
+                data, target = data.to(device), target.to(device)
                 output = self(data)
                 val_loss += criterion(output, target).item()
                 pred = output.argmax(dim=1, keepdim=True)
@@ -49,10 +53,12 @@ class MLP_MNIST(nn.Module):
         new_model.fc2.bias.data = self.fc2.bias.data + other.fc2.bias.data
         new_model.fc3.weight.data = self.fc3.weight.data + other.fc3.weight.data
         new_model.fc3.bias.data = self.fc3.bias.data + other.fc3.bias.data
-        return new_model
+        device = self.parameters().__next__().device
+        return new_model.to(device)
     def __sub__(self, other):
         new_model = MLP_MNIST()
-        return self+other*(-1)
+        device = self.parameters().__next__().device
+        return (self+other*(-1)).to(device)
     def __mul__(self, other):
         new_model = MLP_MNIST()
         new_model.fc1.weight.data = self.fc1.weight.data * other
@@ -61,4 +67,5 @@ class MLP_MNIST(nn.Module):
         new_model.fc2.bias.data = self.fc2.bias.data * other
         new_model.fc3.weight.data = self.fc3.weight.data * other
         new_model.fc3.bias.data = self.fc3.bias.data * other
-        return new_model
+        device = self.parameters().__next__().device
+        return new_model.to(device)
