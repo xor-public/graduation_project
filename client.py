@@ -20,7 +20,7 @@ class Client:
         if self.config["optimizer"]=="adam":
             self.optimizer=torch.optim.Adam(self.model.parameters(),lr=self.config["lr"])
         elif self.config["optimizer"]=="sgd":
-            self.optimizer=torch.optim.SGD(self.model.parameters(),lr=self.config["lr"])
+            self.optimizer=torch.optim.SGD(self.model.parameters(),lr=self.config["lr"],momentum=self.config["momentum"])
         criterion=torch.nn.CrossEntropyLoss()
         self.criterion=criterion
     def train_model(self):

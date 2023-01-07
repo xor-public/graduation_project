@@ -1,0 +1,16 @@
+{
+    "task":"mnist",
+    "model":"cnn_mnist",
+    "dataset":"mnist",
+    "optimizer":"sgd",
+    "lr":0.1,
+    "momentum":0.0,
+    "K":100,
+    "C":0.2,
+    "B":10,
+    "E":5,
+    "device":"cuda",
+    "eta":0.1,
+    "batch_size":128,
+    "epochs":100
+}

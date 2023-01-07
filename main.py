@@ -6,11 +6,11 @@ import json
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument("--task",type=str,default="mnist")
+    parser.add_argument("--task",type=str,default="mnist_cnn")
     args=parser.parse_args()
-    assert args.task in ["mnist","cifar10"]
+    # assert args.task in ["mnist","cifar10"]
     config=json.loads(open(f"config/{args.task}.json").read())
-    train_data,val_data=make_dataset(args.task)
+    train_data,val_data=make_dataset(config["dataset"])
 
     server=Server(config)
     clients=server.clients

@@ -2,6 +2,7 @@ import random
 import json
 from client import Client
 from models.mlp_mnist import MLP_MNIST
+from models.cnn_mnist import CNN_MNIST
 from torch.utils.data import DataLoader
 import torch
 import copy
@@ -21,6 +22,8 @@ class Server:
     def model_init(self):
         if self.config["model"]=="mlp_mnist":
             return MLP_MNIST().to(self.device)
+        elif self.config["model"]=="cnn_mnist":
+            return CNN_MNIST().to(self.device)
     def clients_init(self):
         clients=[]
         for i in range(self.config["K"]):
