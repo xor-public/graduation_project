@@ -45,27 +45,3 @@ class MLP_MNIST(nn.Module):
             100. * correct / len(val_loader.dataset)))
         return val_loss, correct / len(val_loader.dataset)
     
-    def __add__(self, other):
-        new_model = MLP_MNIST()
-        new_model.fc1.weight.data = self.fc1.weight.data + other.fc1.weight.data
-        new_model.fc1.bias.data = self.fc1.bias.data + other.fc1.bias.data
-        new_model.fc2.weight.data = self.fc2.weight.data + other.fc2.weight.data
-        new_model.fc2.bias.data = self.fc2.bias.data + other.fc2.bias.data
-        new_model.fc3.weight.data = self.fc3.weight.data + other.fc3.weight.data
-        new_model.fc3.bias.data = self.fc3.bias.data + other.fc3.bias.data
-        device = self.parameters().__next__().device
-        return new_model.to(device)
-    def __sub__(self, other):
-        new_model = MLP_MNIST()
-        device = self.parameters().__next__().device
-        return (self+other*(-1)).to(device)
-    def __mul__(self, other):
-        new_model = MLP_MNIST()
-        new_model.fc1.weight.data = self.fc1.weight.data * other
-        new_model.fc1.bias.data = self.fc1.bias.data * other
-        new_model.fc2.weight.data = self.fc2.weight.data * other
-        new_model.fc2.bias.data = self.fc2.bias.data * other
-        new_model.fc3.weight.data = self.fc3.weight.data * other
-        new_model.fc3.bias.data = self.fc3.bias.data * other
-        device = self.parameters().__next__().device
-        return new_model.to(device)
