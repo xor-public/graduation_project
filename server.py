@@ -1,11 +1,9 @@
 import random
 import json
 from client import Client
-from models.mlp_mnist import MLP_MNIST
-from models.cnn_mnist import CNN_MNIST
+from models.model_loader import ModelLoader
 from torch.utils.data import DataLoader
 import torch
-import copy
 from tqdm import tqdm
 
 class Server:
@@ -18,12 +16,11 @@ class Server:
         # self.next_model=self.next_model-self.next_model
     def load_data(self,val_data):
         self.val_loader=DataLoader(val_data,batch_size=self.config["B"])
-        self.criterion=torch.nn.CrossEntropyLoss()
     def model_init(self):
-        if self.config["model"]=="mlp_mnist":
-            return MLP_MNIST().to(self.device)
-        elif self.config["model"]=="cnn_mnist":
-            return CNN_MNIST().to(self.device)
+        model_loader=ModelLoader(self.config)
+        model=model_loader.load_model()
+        model.to(self.device)
+        return model
     def clients_init(self):
         clients=[]
         for i in range(self.config["K"]):
@@ -56,5 +53,5 @@ class Server:
         # self.next_model=self.next_model-self.next_model
         self.aggregate_models(recieved_models)
     def validate(self):
-        self.model.validate(self.val_loader,self.criterion)
+        self.model.validate(self.val_loader)
 

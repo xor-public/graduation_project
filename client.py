@@ -21,10 +21,8 @@ class Client:
             self.optimizer=torch.optim.Adam(self.model.parameters(),lr=self.config["lr"])
         elif self.config["optimizer"]=="sgd":
             self.optimizer=torch.optim.SGD(self.model.parameters(),lr=self.config["lr"],momentum=self.config["momentum"])
-        criterion=torch.nn.CrossEntropyLoss()
-        self.criterion=criterion
     def train_model(self):
         for epoch in range(self.config["E"]):
-            self.model.train_one_epoch(self.train_loader,self.optimizer,self.criterion)
+            self.model.train_one_epoch(self.train_loader,self.optimizer)
     def submit_model(self):
         return self.model

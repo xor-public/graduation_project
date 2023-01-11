@@ -1,0 +1,16 @@
+{
+    "task":"cifar10",
+    "model":"cnn_cifar",
+    "dataset":"cifar10",
+    "optimizer":"sgd",
+    "lr":0.25,
+    "momentum":0.0,
+    "K":100,
+    "C":0.1,
+    "B":50,
+    "E":5,
+    "device":"cuda",
+    "eta":0.1,
+    "batch_size":128,
+    "epochs":100
+}
