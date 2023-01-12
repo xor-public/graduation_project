@@ -31,7 +31,7 @@ class ImageClassification_Basemodel(nn.Module):
                 val_loss += criterion(output, target).item()
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
-        val_loss /= len(val_loader.dataset)
+        val_loss /= len(val_loader)
         print('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
             val_loss, correct, len(val_loader.dataset),
             100. * correct / len(val_loader.dataset)))

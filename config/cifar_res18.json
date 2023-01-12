@@ -1,16 +1,16 @@
 {
-    "task":"mnist",
-    "model":"cnn_mnist",
-    "dataset":"mnist",
+    "task":"cifar10",
+    "model":"res18_cifar",
+    "dataset":"cifar10",
     "optimizer":"sgd",
-    "lr":0.1,
+    "lr":0.01,
     "momentum":0.0,
     "K":100,
-    "C":0.2,
+    "C":0.1,
     "B":10,
     "E":5,
     "device":"cuda",
-    "eta":5,
+    "eta":0.1,
     "batch_size":128,
     "epochs":100
 }

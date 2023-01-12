@@ -34,11 +34,12 @@ class Server:
     def aggregate_models(self,recieved_models):
         # self.next_model+=(recieved-self.model)*(self.config["eta"]/(self.config["C"]*self.config["K"]))
         # self.next_model+=recieved*(1/(self.config["K"]*self.config["C"]))
-        for key in self.model.state_dict().keys():
-            self.model.state_dict()[key]*=0
+        # for key in self.model.state_dict().keys():
+        #     self.model.state_dict()[key]*=0
         for model in recieved_models:
             for key in model.state_dict().keys():
-                self.model.state_dict()[key]+=model.state_dict()[key]/len(recieved_models)
+                if model.state_dict()[key].dtype==torch.float32:
+                    self.model.state_dict()[key]+=(model.state_dict()[key]-self.model.state_dict()[key])/len(recieved_models)*self.config["eta"]
     def train_one_epoch(self):
         selected_clients=self.select_clients()
         recieved_models=[]
@@ -48,6 +49,7 @@ class Server:
             client.train_model()
             recieved=client.submit_model()
             recieved_models.append(recieved)
+        self.config["lr"]*=0.99
         # self.model=copy.deepcopy(self.next_model)
         # self.next_model=copy.deepcopy(self.model)*(1-self.config["C"])
         # self.next_model=self.next_model-self.next_model

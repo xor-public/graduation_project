@@ -10,7 +10,7 @@
     "B":10,
     "E":1,
     "device":"cpu",
-    "eta":0.1,
+    "eta":5,
     "batch_size":128,
     "epochs":100
 }
