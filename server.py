@@ -12,6 +12,8 @@ class Server:
         self.clients=self.clients_init()
         self.device=torch.device(config["device"])
         self.model=self.model_init()
+        self.empty_optimizer=torch.optim.SGD(self.model.parameters(),lr=config["optimizer_args"]["lr"])
+        self.scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(self.empty_optimizer,self.config["epochs"])
         # self.next_model=self.model*(1-config["C"])
         # self.next_model=self.next_model-self.next_model
     def load_data(self,val_data):
@@ -49,7 +51,11 @@ class Server:
             client.train_model()
             recieved=client.submit_model()
             recieved_models.append(recieved)
-        self.config["lr"]*=0.99
+            del client.model
+        self.empty_optimizer.step()
+        self.scheduler.step()
+        self.config["optimizer_args"]["lr"]=self.empty_optimizer.param_groups[0]["lr"]
+        # self.config["lr"]*=0.99
         # self.model=copy.deepcopy(self.next_model)
         # self.next_model=copy.deepcopy(self.model)*(1-self.config["C"])
         # self.next_model=self.next_model-self.next_model

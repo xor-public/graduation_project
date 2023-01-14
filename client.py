@@ -2,6 +2,7 @@ import random
 import torch
 from torch.utils.data import DataLoader
 import copy
+import logging
 
 class Client:
     def __init__(self,config,idx):
@@ -17,11 +18,16 @@ class Client:
 
     def get_model(self,model):
         self.model=copy.deepcopy(model)
+        self.set_optimizer()
+    def set_optimizer(self):
         if self.config["optimizer"]=="adam":
-            self.optimizer=torch.optim.Adam(self.model.parameters(),lr=self.config["lr"])
+            optimizer=torch.optim.Adam
         elif self.config["optimizer"]=="sgd":
-            self.optimizer=torch.optim.SGD(self.model.parameters(),lr=self.config["lr"],momentum=self.config["momentum"])
+            optimizer=torch.optim.SGD
+        self.optimizer=optimizer(self.model.parameters(),**self.config["optimizer_args"])
     def train_model(self):
+        # print(self.optimizer.param_groups[0]["lr"])
+        logging.info("Client {} is training".format(self.idx))
         for epoch in range(self.config["E"]):
             self.model.train_one_epoch(self.train_loader,self.optimizer)
     def submit_model(self):

@@ -1,23 +1,38 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from tqdm import tqdm
+from loggings import logger
 
 class ImageClassification_Basemodel(nn.Module):
     def __init__(self):
         super(ImageClassification_Basemodel, self).__init__()
     
-    def train_one_epoch(self, train_loader, optimizer):
+    def train_one_epoch(self, train_loader, optimizer, progress_bar=False):
         device = self.parameters().__next__().device
         self.train()
         criterion = nn.CrossEntropyLoss()
-        for batch_idx, (data, target) in enumerate(train_loader):
+        correct = 0
+        train_loss = 0
+        if progress_bar:
+            wrapper=tqdm
+        else:
+            wrapper=lambda x:x
+        for batch_idx, (data, target) in wrapper(enumerate(train_loader)):
             optimizer.zero_grad()
             data, target = data.to(device), target.to(device)
             output = self(data)
+            pred = output.argmax(dim=1, keepdim=True)
+            correct += pred.eq(target.view_as(pred)).sum().item()
             loss = criterion(output, target)
+            train_loss += loss.item()
             loss.backward()
             optimizer.step()
-    
+        train_loss /= len(train_loader)
+        logger.debug('Train set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            train_loss, correct, len(train_loader.dataset),
+            100. * correct / len(train_loader.dataset)))
+        return train_loss, correct / len(train_loader.dataset)
     def validate(self, val_loader):
         device = self.parameters().__next__().device
         self.eval()
@@ -32,7 +47,7 @@ class ImageClassification_Basemodel(nn.Module):
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
         val_loss /= len(val_loader)
-        print('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        logger.info('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
             val_loss, correct, len(val_loader.dataset),
             100. * correct / len(val_loader.dataset)))
         return val_loss, correct / len(val_loader.dataset)
