@@ -1,7 +1,7 @@
 {
-    "task":"cifar10",
-    "model":"res18_cifar",
-    "dataset":"cifar10",
+    "task":"tiny_imagenet",
+    "model":"res18_tinyimagenet",
+    "dataset":"tiny_imagenet",
     "optimizer":"sgd",
     "optimizer_args":{
         "lr":0.1,

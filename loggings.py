@@ -17,7 +17,7 @@ class Logger:
                 fmt = '%(asctime)s \n%(message)s\n'
                 formatter = logging.Formatter(fmt)
                 file_handler.setFormatter(formatter)
-                console_handler.setFormatter(formatter)
+                # console_handler.setFormatter(formatter)
                 logger = logging.getLogger('logger')
                 logger.setLevel('DEBUG')     
                 logger.addHandler(file_handler)    

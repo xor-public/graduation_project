@@ -2,7 +2,7 @@ import random
 import torch
 from torch.utils.data import DataLoader
 import copy
-import logging
+from loggings import logger
 
 class Client:
     def __init__(self,config,idx):
@@ -27,7 +27,7 @@ class Client:
         self.optimizer=optimizer(self.model.parameters(),**self.config["optimizer_args"])
     def train_model(self):
         # print(self.optimizer.param_groups[0]["lr"])
-        logging.info("Client {} is training".format(self.idx))
+        logger.debug("Client {} is training".format(self.idx))
         for epoch in range(self.config["E"]):
             self.model.train_one_epoch(self.train_loader,self.optimizer)
     def submit_model(self):

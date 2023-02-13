@@ -3,8 +3,9 @@
     "model":"mlp_mnist",
     "dataset":"mnist",
     "optimizer":"sgd",
-    "lr":0.1,
-    "momentum":0.0,
+    "optimizer_args":{
+        "lr":0.1
+    },
     "K":100,
     "C":0.2,
     "B":10,

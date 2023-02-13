@@ -1,5 +1,7 @@
 from torchvision import datasets, transforms
 import random
+import wget
+import os
 from loggings import logger
 
 class CIFAR10_TRAIN(datasets.CIFAR10):
@@ -33,7 +35,6 @@ val_transform=transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
 def make_dataset(dataset):
-    random.seed(42)
     logger.info(f"Loading {dataset} dataset")
     if dataset=="mnist":
         mnist_train=datasets.mnist.MNIST(root='./data', train=True, download=True, transform=transforms.ToTensor())
@@ -52,6 +53,10 @@ def make_dataset(dataset):
         train,val=cifar10_train,cifar10_val
 
     elif dataset=="tiny_imagenet":
+        if os.path.exists("./data/tiny-imagenet-200")==False:
+            if os.path.exists("./data/tiny-imagenet-200.zip")==False:
+                wget.download("http://cs231n.stanford.edu/tiny-imagenet-200.zip",out="./data")
+            os.system("unzip ./data/tiny-imagenet-200.zip -d ./data > /dev/null")
         tiny_imagenet_train=datasets.ImageFolder(root='./data/tiny-imagenet-200/train', transform=transforms.ToTensor())
         tiny_imagenet_val=datasets.ImageFolder(root='./data/tiny-imagenet-200/val', transform=transforms.ToTensor())
         tiny_imagenet_train=list(tiny_imagenet_train)
