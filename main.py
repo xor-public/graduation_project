@@ -26,10 +26,15 @@ def main():
         val_every_n_epochs=config["val_every_n_epochs"]
     except:
         val_every_n_epochs=1
-    train_data,val_data=make_dataset(config["dataset"])
 
     server=Server(config)
     clients=server.clients
+    
+    if args.attack:
+        train_data,val_data=make_dataset(config["dataset"],args.attack_method)
+    else:
+        train_data,val_data=make_dataset(config["dataset"])
+
     for client in clients:
         client.load_data(train_data)
     server.load_data(val_data)
@@ -44,6 +49,9 @@ def main():
         server.train_one_epoch()
         if epoch%val_every_n_epochs==0:
             server.validate()
+            if args.attack:
+                if attacker.backdoor_task:
+                    attacker.method.accs.append(server.model.validate(attacker.method.backdoor_test_loader)[1])
 
 def set_fixed_seed(seed):
     torch.manual_seed(seed) # 为CPU设置随机种子

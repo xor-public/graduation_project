@@ -13,7 +13,9 @@ class Client:
         data_per_client=int(len(train_data)/self.config["K"])
         start_idx=self.idx*data_per_client
         end_idx=(self.idx+1)*data_per_client
-        local_data=train_data[start_idx:end_idx]
+        local_data=copy.deepcopy(train_data)
+        local_data.data=train_data.data[start_idx:end_idx]
+        local_data.targets=train_data.targets[start_idx:end_idx]
         self.train_loader=DataLoader(local_data,batch_size=self.config["B"],shuffle=True)
 
     def get_model(self,model):
@@ -30,5 +32,7 @@ class Client:
         logger.debug("Client {} is training".format(self.idx))
         for epoch in range(self.config["E"]):
             self.model.train_one_epoch(self.train_loader,self.optimizer)
+        with torch.no_grad():
+            pass
     def submit_model(self):
         return self.model
