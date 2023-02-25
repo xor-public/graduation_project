@@ -48,7 +48,8 @@ class ConstrainAndScale():
             def get_model(self,model):
                 self.client.get_model(model)
                 self.model=copy.deepcopy(model)
-            def train_model(self):
+            def train_model(self,num_poison=0):
+                self.num_poison=num_poison
                 print('poison')
                 self.client.optimizer.param_groups[0]['lr']=0.05
                 self.client.optimizer.param_groups[0]['weight_decay']=0.005
@@ -68,5 +69,5 @@ class ConstrainAndScale():
             def scale_model(self):
                 for key in self.model.state_dict():
                     if self.model.state_dict()[key].dtype==torch.float32:
-                        self.client.model.state_dict()[key]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*100+self.model.state_dict()[key]
+                        self.client.model.state_dict()[key]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*100/self.num_poison+self.model.state_dict()[key]
         return AttackedClient(client,self.accs,self.backdoor_test_loader)

@@ -45,6 +45,9 @@ def main():
 
     for epoch in range(config["epochs"]):
         epoch+=1
+        # if epoch==3:
+        #     server.clients=[client for client in clients if isinstance(client,Client)]
+        #     server.clients+=server.clients[:10]
         logger.info(f"Epoch {epoch}")
         server.train_one_epoch()
         if epoch%val_every_n_epochs==0:

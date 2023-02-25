@@ -27,7 +27,7 @@ class Client:
         elif self.config["optimizer"]=="sgd":
             optimizer=torch.optim.SGD
         self.optimizer=optimizer(self.model.parameters(),**self.config["optimizer_args"])
-    def train_model(self):
+    def train_model(self,num_poison=0):
         # print(self.optimizer.param_groups[0]["lr"])
         logger.debug("Client {} is training".format(self.idx))
         for epoch in range(self.config["E"]):

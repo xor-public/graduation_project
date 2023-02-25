@@ -5,6 +5,7 @@ from models.model_loader import ModelLoader
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
+from loggings import logger
 
 class Server:
     def __init__(self,config):
@@ -45,13 +46,15 @@ class Server:
     def train_one_epoch(self):
         selected_clients=self.select_clients()
         recieved_models=[]
+        num_poison=len(selected_clients)-len([self.clients[i] for i in selected_clients if isinstance(self.clients[i],Client)])
+        logger.info("poisoned clients selected:{}".format(num_poison))
         for client_idx in tqdm(selected_clients):
             client=self.clients[client_idx]
             client.get_model(self.model)
-            client.train_model()
+            client.train_model(num_poison)
             recieved=client.submit_model()
             recieved_models.append(recieved)
-            del client.model
+            # del client.model
         self.empty_optimizer.step()
         self.scheduler.step()
         # self.config["eta"]=self.empty_optimizer.param_groups[0]["lr"]
@@ -60,6 +63,9 @@ class Server:
         # self.next_model=copy.deepcopy(self.model)*(1-self.config["C"])
         # self.next_model=self.next_model-self.next_model
         self.aggregate_models(recieved_models)
-    def validate(self):
-        self.model.validate(self.val_loader)
+    def validate(self,loader=''):
+        if loader=='':
+            self.model.validate(self.val_loader)
+        else:
+            self.model.validate(loader)
 

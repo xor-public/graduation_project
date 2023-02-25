@@ -26,7 +26,7 @@ class UntargetedPoisoning():
                 self.client=client
             def get_model(self,model):
                 self.client.get_model(model)
-            def train_model(self):
+            def train_model(self,num_poison=0):
                 self.client.train_model()
             def submit_model(self):
                 return self.client.submit_model()
