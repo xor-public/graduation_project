@@ -1,6 +1,7 @@
 import random
 from .untargeted_poisoning import UntargetedPoisoning
 from .constrain_scale import ConstrainAndScale
+from .dba import DBA
 
 class Attacker():
     def __init__(self,method):
@@ -10,6 +11,8 @@ class Attacker():
             self.backdoor_task=False
         if method=="constrain_scale":
             self.method=ConstrainAndScale()
+        if method=="dba":
+            self.method=DBA()
     def attack(self,clients):
         # ratio=self.method.ratio
         # client_num=len(clients)
