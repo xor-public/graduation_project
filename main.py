@@ -11,50 +11,40 @@ from loggings import logger
 
 def main():
     set_fixed_seed(42)
-    parser=argparse.ArgumentParser()
-    parser.add_argument("-t","--task",type=str,default="mnist_mlp")
-    parser.add_argument("-a","--attack",action="store_true")
-    parser.add_argument("-m","--attack_method",type=str,default="none")
-    args=parser.parse_args()
 
-    # assert args.task in ["mnist","cifar10"]
+    args=parse_args()
+
     config=json.loads(open(f"config/{args.task}.json").read())
-    logger.get_logger(config)
+
+    logger.add_log_file(f"{args.task}_{args.attack_method}_{args.defend_method}.log")
     for key in config.keys():
         logger.info(f"{key}: {config[key]}")
-    try:
-        val_every_n_epochs=config["val_every_n_epochs"]
-    except:
-        val_every_n_epochs=1
 
     server=Server(config)
     clients=server.clients
+    if args.resume:
+        server.model.load_state_dict(torch.load(args.resume))
     
-    if args.attack:
-        train_data,val_data=make_dataset(config["dataset"],args.attack_method)
-    else:
-        train_data,val_data=make_dataset(config["dataset"])
+    train_data,val_data=make_dataset(config["dataset"],args.attack_method)
 
     for client in clients:
         client.load_data(train_data)
     server.load_data(val_data)
 
-    if args.attack:
+    if args.attack_method:
         attacker=Attacker(args.attack_method)
         attacker.attack(clients)
 
     for epoch in range(config["epochs"]):
         epoch+=1
-        # if epoch==3:
-        #     server.clients=[client for client in clients if isinstance(client,Client)]
-        #     server.clients+=server.clients[:10]
         logger.info(f"Epoch {epoch}")
         server.train_one_epoch()
+        val_every_n_epochs=1
         if epoch%val_every_n_epochs==0:
-            server.validate()
-            if args.attack:
+            logger.accs.append(server.validate()[1])
+            if args.attack_method:
                 if attacker.backdoor_task:
-                    attacker.method.accs.append(server.model.validate(attacker.method.backdoor_test_loader)[1])
+                    logger.backdool_accs.append(server.model.validate(attacker.method.backdoor_test_loader,mode='backdoor')[1])
 
 def set_fixed_seed(seed):
     torch.manual_seed(seed) # 为CPU设置随机种子
@@ -64,6 +54,15 @@ def set_fixed_seed(seed):
     random.seed(seed)  # Python random module.	
     # torch.backends.cudnn.benchmark = False
     # torch.backends.cudnn.deterministic = True
+
+def parse_args():
+    parser=argparse.ArgumentParser()
+    parser.add_argument("-t","--task",type=str,default="mnist_mlp")
+    parser.add_argument("-r","--resume",type=str,default=None)
+    parser.add_argument("-a","--attack_method",type=str,default=None)
+    parser.add_argument("-d","--defend_method",type=str,default=None)
+    args=parser.parse_args()
+    return args
 
 if __name__ == "__main__":
     main()

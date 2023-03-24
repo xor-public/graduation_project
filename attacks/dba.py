@@ -4,6 +4,8 @@ from torchvision.datasets import CIFAR10
 from torchvision import transforms
 import torch
 import copy
+from loggings import logger
+from matplotlib import pyplot as plt
 
 class DBA():
     def __init__(self,client_ratio=0.04):
@@ -11,7 +13,7 @@ class DBA():
         self.swap_label=2
         self.val_data=CIFAR10(root='./data', train=False, download=True, transform=None)
         self.transform1=transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
+            # transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
@@ -46,13 +48,15 @@ class DBA():
         if attack_num%4!=0:
             attack_num=attack_num//4*4
         attack_clients_ids=random.sample(range(client_num),attack_num)
-        for i in attack_clients_ids:
-            clients[i]=self.attack_one_client(clients[i],i)
+        for i,idx in enumerate(attack_clients_ids):
+            clients[idx]=self.attack_one_client(clients[idx],i)
     def attack_one_client(self,client,attack_id):
         def collate_fn(batch):
             data,labels=zip(*batch)
-            data=[self.add_pixel_pattern(data[i],attack_id%4) if i<5 else data[i] for i in range(len(data))]
-            labels=[self.swap_label if i<5 else labels[i] for i in range(len(labels))]
+            poison_img_num=5
+            data=[self.add_pixel_pattern(data[i],attack_id%4) if i<poison_img_num else data[i] for i in range(len(data))]+list(data[:poison_img_num])
+            labels=[self.swap_label if i<poison_img_num else labels[i] for i in range(len(labels))]+list(labels[:poison_img_num])
+            # plt.imshow(data[0].permute(1,2,0)*torch.tensor([0.2023,0.1994,0.2010])+torch.tensor([0.4914,0.4822,0.4465]))
             data=torch.stack(data)
             labels=torch.tensor(labels)
             return data,labels
@@ -65,26 +69,28 @@ class DBA():
             def get_model(self,model):
                 self.client.get_model(model)
                 self.model=copy.deepcopy(model)
-            def train_model(self,num_poison=0):
-                self.num_poison=num_poison
+            def train_model(self):
+                self.num_poison=logger.num_poisons[-1]
                 print('poison')
-                self.client.optimizer.param_groups[0]['lr']=0.05
+                self.client.optimizer.param_groups[0]['lr']/=10
                 self.client.optimizer.param_groups[0]['weight_decay']=0.005
-                if self.accs[-1]>0.2:
+                if logger.backdool_accs[-1]>0.2:
                     self.client.optimizer.param_groups[0]['lr']/=50
-                elif self.accs[-1]>0.6:
-                    self.client.optimizer.param_groups[0]['lr']/=5000
-                retrain_epoches=15
+                elif logger.backdool_accs[-1]>0.6:
+                    self.client.optimizer.param_groups[0]['lr']/=50
+                retrain_epoches=10
                 scheduler=torch.optim.lr_scheduler.MultiStepLR(self.client.optimizer,milestones=[retrain_epoches*0.2,retrain_epoches*0.8],gamma=0.1)
                 for i in range(retrain_epoches):
                     self.client.train_model()
                     scheduler.step()
-                self.client.model.validate(self.backdoor_test_loader)
+                    self.client.model.validate(self.client.train_loader)
+                    self.client.model.validate(self.backdoor_test_loader,mode='backdoor')
             def submit_model(self):
                 self.scale_model()
                 return self.client.submit_model()
             def scale_model(self):
+                scale_weight=100
                 for key in self.model.state_dict():
                     if self.model.state_dict()[key].dtype==torch.float32:
-                        self.client.model.state_dict()[key]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*100/self.num_poison+self.model.state_dict()[key]
+                        self.client.model.state_dict()[key][:]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*scale_weight/self.num_poison+self.model.state_dict()[key]
         return AttackedClient(client,self.accs,self.backdoor_test_loader)

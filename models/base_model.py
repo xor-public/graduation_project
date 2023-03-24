@@ -18,7 +18,7 @@ class ImageClassification_Basemodel(nn.Module):
             wrapper=tqdm
         else:
             wrapper=lambda x:x
-        for batch_idx, (data, target) in wrapper(enumerate(train_loader)):
+        for batch_idx, (data, target) in enumerate(wrapper(train_loader)):
             optimizer.zero_grad()
             data, target = data.to(device), target.to(device)
             output = self(data)
@@ -33,7 +33,7 @@ class ImageClassification_Basemodel(nn.Module):
             train_loss, correct, len(train_loader.dataset),
             100. * correct / len(train_loader.dataset)))
         return train_loss, correct / len(train_loader.dataset)
-    def validate(self, val_loader):
+    def validate(self, val_loader, mode='val'):
         device = self.parameters().__next__().device
         self.eval()
         criterion = nn.CrossEntropyLoss()
@@ -47,7 +47,12 @@ class ImageClassification_Basemodel(nn.Module):
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
         val_loss /= len(val_loader)
-        logger.info('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-            val_loss, correct, len(val_loader.dataset),
-            100. * correct / len(val_loader.dataset)))
+        if mode=='val':
+            logger.info('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+                val_loss, correct, len(val_loader.dataset),
+                100. * correct / len(val_loader.dataset)))
+        elif mode=='backdoor':
+            logger.info('Backdool set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+                val_loss, correct, len(val_loader.dataset),
+                100. * correct / len(val_loader.dataset)))
         return val_loss, correct / len(val_loader.dataset)

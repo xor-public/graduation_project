@@ -27,12 +27,13 @@ class Client:
         elif self.config["optimizer"]=="sgd":
             optimizer=torch.optim.SGD
         self.optimizer=optimizer(self.model.parameters(),**self.config["optimizer_args"])
-    def train_model(self,num_poison=0):
+    def train_model(self):
         # print(self.optimizer.param_groups[0]["lr"])
         logger.debug("Client {} is training".format(self.idx))
         for epoch in range(self.config["E"]):
             self.model.train_one_epoch(self.train_loader,self.optimizer)
         with torch.no_grad():
             pass
+        torch.save(self.model.state_dict(),"./tmp/{}.pt".format(self.idx))
     def submit_model(self):
         return self.model

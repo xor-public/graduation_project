@@ -4,6 +4,7 @@ from torchvision.datasets import CIFAR10
 from torchvision import transforms
 import torch
 import copy
+from loggings import logger
 
 class ConstrainAndScale():
     def __init__(self,client_ratio=0.1):
@@ -48,26 +49,29 @@ class ConstrainAndScale():
             def get_model(self,model):
                 self.client.get_model(model)
                 self.model=copy.deepcopy(model)
-            def train_model(self,num_poison=0):
-                self.num_poison=num_poison
+            def train_model(self):
+                self.num_poison=logger.num_poisons[-1]
                 print('poison')
-                self.client.optimizer.param_groups[0]['lr']=0.05
+                self.client.optimizer.param_groups[0]['lr']/=4
                 self.client.optimizer.param_groups[0]['weight_decay']=0.005
-                if self.accs[-1]>0.2:
+                retrain_epoches=10
+                if logger.backdool_accs[-1]>0.2:
                     self.client.optimizer.param_groups[0]['lr']/=50
-                elif self.accs[-1]>0.6:
-                    self.client.optimizer.param_groups[0]['lr']/=5000
-                retrain_epoches=15
+                elif logger.backdool_accs[-1]>0.6:
+                    self.client.optimizer.param_groups[0]['lr']/=50
                 scheduler=torch.optim.lr_scheduler.MultiStepLR(self.client.optimizer,milestones=[retrain_epoches*0.2,retrain_epoches*0.8],gamma=0.1)
                 for i in range(retrain_epoches):
                     self.client.train_model()
                     scheduler.step()
-                self.client.model.validate(self.backdoor_test_loader)
+                    self.client.model.validate(self.backdoor_test_loader,mode='backdoor')
+                torch.save(self.client.model.state_dict(),f'./tmp/{client.idx}.pt.poison')
             def submit_model(self):
                 self.scale_model()
+                torch.save(self.client.model.state_dict(),f'./tmp/{client.idx}.pt.scale')
                 return self.client.submit_model()
             def scale_model(self):
+                scale_weight=100
                 for key in self.model.state_dict():
                     if self.model.state_dict()[key].dtype==torch.float32:
-                        self.client.model.state_dict()[key]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*100/self.num_poison+self.model.state_dict()[key]
+                        self.client.model.state_dict()[key][:]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*scale_weight/self.num_poison+self.model.state_dict()[key]
         return AttackedClient(client,self.accs,self.backdoor_test_loader)

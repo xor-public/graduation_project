@@ -26,16 +26,7 @@ class CIFAR10_VAL(datasets.CIFAR10):
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         ])(img)
         return img, target
-train_transform=transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-])
-val_transform=transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-])
+
 def make_dataset(dataset,attack_method=''):
     logger.info(f"Loading {dataset} dataset")
     if dataset=="mnist":
@@ -49,6 +40,23 @@ def make_dataset(dataset,attack_method=''):
         train,val=mnist_train,mnist_val
 
     elif dataset=="cifar10":
+        train_transform=transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
+        val_transform=transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
+        if attack_method=="dba":
+            train_transform=transforms.Compose([
+                # transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+            ])
         cifar10_train=datasets.CIFAR10(root='./data', train=True, download=True, transform=train_transform)
         cifar10_val=datasets.CIFAR10(root='./data', train=False, download=True, transform=val_transform)
         if attack_method=="constrain_scale":

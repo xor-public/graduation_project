@@ -6,10 +6,12 @@ from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 from loggings import logger
+from torch.nn.utils import parameters_to_vector, vector_to_parameters
 
 class Server:
-    def __init__(self,config):
+    def __init__(self,config,defend_method=None):
         self.config=config
+        self.defend_method=defend_method
         self.clients=self.clients_init()
         self.device=torch.device(config["device"])
         self.model=self.model_init()
@@ -40,18 +42,27 @@ class Server:
         # for key in self.model.state_dict().keys():
         #     self.model.state_dict()[key]*=0
         for model in recieved_models:
+            print(torch.norm(parameters_to_vector(self.model.parameters())-parameters_to_vector(model.parameters())).item())
+        if self.defend_method:
+            pass
+        for model in recieved_models:
             for key in model.state_dict().keys():
                 if model.state_dict()[key].dtype==torch.float32:
                     self.model.state_dict()[key]+=(model.state_dict()[key]-self.model.state_dict()[key])/len(recieved_models)*self.config["eta"]
+        torch.save(self.model.state_dict(),"./gw.pt")
     def train_one_epoch(self):
+        import os
+        os.system("rm ./tmp/*")
         selected_clients=self.select_clients()
         recieved_models=[]
         num_poison=len(selected_clients)-len([self.clients[i] for i in selected_clients if isinstance(self.clients[i],Client)])
         logger.info("poisoned clients selected:{}".format(num_poison))
+        logger.num_poisons.append(num_poison)
+
         for client_idx in tqdm(selected_clients):
             client=self.clients[client_idx]
             client.get_model(self.model)
-            client.train_model(num_poison)
+            client.train_model()
             recieved=client.submit_model()
             recieved_models.append(recieved)
             # del client.model
@@ -65,7 +76,7 @@ class Server:
         self.aggregate_models(recieved_models)
     def validate(self,loader=''):
         if loader=='':
-            self.model.validate(self.val_loader)
+            return self.model.validate(self.val_loader)
         else:
-            self.model.validate(loader)
+            return self.model.validate(loader)
 
