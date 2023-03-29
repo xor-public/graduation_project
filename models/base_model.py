@@ -39,8 +39,10 @@ class ImageClassification_Basemodel(nn.Module):
         criterion = nn.CrossEntropyLoss()
         val_loss = 0
         correct = 0
+        total = 0
         with torch.no_grad():
             for data, target in val_loader:
+                total += target.size(0)
                 data, target = data.to(device), target.to(device)
                 output = self(data)
                 val_loss += criterion(output, target).item()
@@ -49,10 +51,10 @@ class ImageClassification_Basemodel(nn.Module):
         val_loss /= len(val_loader)
         if mode=='val':
             logger.info('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-                val_loss, correct, len(val_loader.dataset),
-                100. * correct / len(val_loader.dataset)))
+                val_loss, correct, total,
+                100. * correct / total))
         elif mode=='backdoor':
             logger.info('Backdool set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-                val_loss, correct, len(val_loader.dataset),
-                100. * correct / len(val_loader.dataset)))
-        return val_loss, correct / len(val_loader.dataset)
+                val_loss, correct, total,
+                100. * correct / total))
+        return val_loss, correct / total

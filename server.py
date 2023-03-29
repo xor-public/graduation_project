@@ -36,20 +36,21 @@ class Server:
         m=max(int(self.config["C"]*self.config["K"]),1)
         selected_clients=random.sample([i for i in range(self.config["K"])],m)
         return selected_clients
-    def aggregate_models(self,recieved_models):
+    def aggregate_models(self,recieved_models,weight):
         # self.next_model+=(recieved-self.model)*(self.config["eta"]/(self.config["C"]*self.config["K"]))
         # self.next_model+=recieved*(1/(self.config["K"]*self.config["C"]))
         # for key in self.model.state_dict().keys():
         #     self.model.state_dict()[key]*=0
+        weight=[weight[i]/sum(weight) for i in range(len(weight))]
         for model in recieved_models:
             print(torch.norm(parameters_to_vector(self.model.parameters())-parameters_to_vector(model.parameters())).item())
         if self.defend_method:
             pass
-        for model in recieved_models:
+        for idx,model in enumerate(recieved_models):
             for key in model.state_dict().keys():
                 if model.state_dict()[key].dtype==torch.float32:
-                    self.model.state_dict()[key]+=(model.state_dict()[key]-self.model.state_dict()[key])/len(recieved_models)*self.config["eta"]
-        torch.save(self.model.state_dict(),"./gw.pt")
+                    self.model.state_dict()[key].copy_((model.state_dict()[key]-self.model.state_dict()[key])*weight[idx]*self.config["eta"]+self.model.state_dict()[key])
+        # torch.save(self.model.state_dict(),"./gw.pt")
     def train_one_epoch(self):
         import os
         os.system("rm ./tmp/*")
@@ -73,7 +74,8 @@ class Server:
         # self.model=copy.deepcopy(self.next_model)
         # self.next_model=copy.deepcopy(self.model)*(1-self.config["C"])
         # self.next_model=self.next_model-self.next_model
-        self.aggregate_models(recieved_models)
+        weight=[self.clients[selected_clients[i]].data_num for i in range(len(selected_clients))]
+        self.aggregate_models(recieved_models,weight)
     def validate(self,loader=''):
         if loader=='':
             return self.model.validate(self.val_loader)

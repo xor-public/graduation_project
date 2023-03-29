@@ -8,14 +8,15 @@ class Client:
     def __init__(self,config,idx):
         self.config=config
         self.idx=idx
-    def load_data(self,train_data):
-        dataset=self.config["dataset"]
-        data_per_client=int(len(train_data)/self.config["K"])
-        start_idx=self.idx*data_per_client
-        end_idx=(self.idx+1)*data_per_client
+    def load_data(self,train_data,data_split):
+        # data_per_client=int(len(train_data)/self.config["K"])
+        # start_idx=self.idx*data_per_client
+        # end_idx=(self.idx+1)*data_per_client
+        self.data_idxs=data_split[self.idx]
+        self.data_num=len(self.data_idxs)
         local_data=copy.deepcopy(train_data)
-        local_data.data=train_data.data[start_idx:end_idx]
-        local_data.targets=train_data.targets[start_idx:end_idx]
+        local_data.data=train_data.data[self.data_idxs]
+        local_data.targets=train_data.targets[self.data_idxs]
         self.train_loader=DataLoader(local_data,batch_size=self.config["B"],shuffle=True)
 
     def get_model(self,model):

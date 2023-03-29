@@ -25,10 +25,10 @@ def main():
     if args.resume:
         server.model.load_state_dict(torch.load(args.resume))
     
-    train_data,val_data=make_dataset(config["dataset"],args.attack_method)
+    train_data,val_data,data_split=make_dataset(config["dataset"],attack_method=args.attack_method,split="non_iid",num_clients=config["K"])
 
     for client in clients:
-        client.load_data(train_data)
+        client.load_data(train_data,data_split)
     server.load_data(val_data)
 
     if args.attack_method:
@@ -61,6 +61,9 @@ def parse_args():
     parser.add_argument("-r","--resume",type=str,default=None)
     parser.add_argument("-a","--attack_method",type=str,default=None)
     parser.add_argument("-d","--defend_method",type=str,default=None)
+    parser.add_argument("--iid",action="store_true",default=False)
+    parser.add_argument("--low_vram",action="store_true",default=False)
+
     args=parser.parse_args()
     return args
 

@@ -27,7 +27,7 @@ class CIFAR10_VAL(datasets.CIFAR10):
         ])(img)
         return img, target
 
-def make_dataset(dataset,attack_method=''):
+def make_dataset(dataset,**kwargs):
     logger.info(f"Loading {dataset} dataset")
     if dataset=="mnist":
         mnist_train=datasets.mnist.MNIST(root='./data', train=True, download=True, transform=transforms.ToTensor())
@@ -50,6 +50,7 @@ def make_dataset(dataset,attack_method=''):
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         ])
+        attack_method=kwargs.get("attack_method","")
         if attack_method=="dba":
             train_transform=transforms.Compose([
                 # transforms.RandomCrop(32, padding=4),
@@ -86,9 +87,31 @@ def make_dataset(dataset,attack_method=''):
         tiny_imagenet_train.imgs,tiny_imagenet_train.targets=zip(*data)
         tiny_imagenet_train.imgs=torch.stack(tiny_imagenet_train.imgs)
         tiny_imagenet_train.targets=torch.stack(tiny_imagenet_train.targets)
-
         train,val=tiny_imagenet_train,tiny_imagenet_val
+
+    split=kwargs.get("split",None)
+    if split is not None:
+        num_clients=kwargs.get("num_clients")
+        data_split=np.arange(len(train))
+        if split=="iid":
+            data_split=np.array_split(data_split,num_clients)
+        elif split=="non_iid":
+            alpha=kwargs.get("alpha",0.5)
+            data_split=[[] for i in range(num_clients)]
+            label_indexes=[]
+            num_labels=len(set(train.targets))
+            for i in range(num_labels):
+                label_indexes.append(np.where(np.array(train.targets)==i)[0])
+                sample_prob=np.random.dirichlet(num_clients*[alpha])
+                for client in range(num_clients):
+                    num_imgs=int(len(label_indexes[i])*sample_prob[client])
+                    data_split[client].extend(label_indexes[i][:num_imgs])
+                    label_indexes[i]=label_indexes[i][num_imgs:]
+            data_split=[np.array(data_split[i]) for i in range(num_clients)]
+
     logger.info(f"Loaded {dataset} dataset")
+    if split:
+        return train,val,data_split
     return train,val
 if __name__ == "__main__":
     train_data,val_data=make_dataset("cifar10")

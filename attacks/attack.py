@@ -2,6 +2,8 @@ import random
 from .untargeted_poisoning import UntargetedPoisoning
 from .constrain_scale import ConstrainAndScale
 from .dba import DBA
+from .edgecase import Edgecase
+from .pgd import PGD
 
 class Attacker():
     def __init__(self,method):
@@ -13,6 +15,10 @@ class Attacker():
             self.method=ConstrainAndScale()
         if method=="dba":
             self.method=DBA()
+        if method=="edgecase":
+            self.method=Edgecase()
+        if method=="pgd":
+            self.method=PGD()
     def attack(self,clients):
         # ratio=self.method.ratio
         # client_num=len(clients)

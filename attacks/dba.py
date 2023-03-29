@@ -72,25 +72,27 @@ class DBA():
             def train_model(self):
                 self.num_poison=logger.num_poisons[-1]
                 print('poison')
-                self.client.optimizer.param_groups[0]['lr']/=10
+                self.client.optimizer.param_groups[0]['lr']/=2
+                # self.client.optimizer.param_groups[0]['lr']/=100
                 self.client.optimizer.param_groups[0]['weight_decay']=0.005
-                if logger.backdool_accs[-1]>0.2:
-                    self.client.optimizer.param_groups[0]['lr']/=50
-                elif logger.backdool_accs[-1]>0.6:
-                    self.client.optimizer.param_groups[0]['lr']/=50
-                retrain_epoches=10
-                scheduler=torch.optim.lr_scheduler.MultiStepLR(self.client.optimizer,milestones=[retrain_epoches*0.2,retrain_epoches*0.8],gamma=0.1)
+                retrain_epoches=3
+                # if logger.backdool_accs[-1]>0.2:
+                #     self.client.optimizer.param_groups[0]['lr']/=50
+                if logger.backdool_accs[-1]>0.6:
+                    self.client.optimizer.param_groups[0]['lr']/=100
+                scheduler=torch.optim.lr_scheduler.MultiStepLR(self.client.optimizer,milestones=[retrain_epoches*0.2,retrain_epoches*0.8],gamma=1)
                 for i in range(retrain_epoches):
                     self.client.train_model()
                     scheduler.step()
                     self.client.model.validate(self.client.train_loader)
                     self.client.model.validate(self.backdoor_test_loader,mode='backdoor')
+                torch.save(self.client.model.state_dict(),f'./tmp/{client.idx}.pt.poison')
             def submit_model(self):
                 self.scale_model()
                 return self.client.submit_model()
             def scale_model(self):
                 scale_weight=100
                 for key in self.model.state_dict():
-                    if self.model.state_dict()[key].dtype==torch.float32:
+                    if self.model.state_dict()[key].dtype==torch.float32  and 'running_mean' not in key and 'running_var' not in key:
                         self.client.model.state_dict()[key][:]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*scale_weight/self.num_poison+self.model.state_dict()[key]
         return AttackedClient(client,self.accs,self.backdoor_test_loader)
