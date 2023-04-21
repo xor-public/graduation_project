@@ -1,0 +1,50 @@
+task: word
+model: word_model
+dataset: reddit
+device: cuda
+
+fl:
+  optimizer: sgd
+  optimizer_args:
+    lr: 20
+  K: 80000
+  C: 0.00125
+  B: 64
+  E: 2
+  eta: 1
+  epochs: 200
+  val_batch_size: 128
+poisoned_fl:
+  optimizer: sgd
+  optimizer_args:
+    lr: 20
+  K: 80000
+  C: 0.00125
+  B: 64
+  E: 2
+  eta: 1
+  val_batch_size: 128
+  epochs: 200
+
+local:
+  optimizer: sgd
+  optimizer_args:
+    lr: 20
+  batch_size: 128
+  epochs: 200
+  val_batch_size: 128
+
+constrain_scale:
+  mode: word
+  single_shot: False
+  attack_epochs: [0]
+  word:
+    attack_ratio: 0.1
+    poison_sentence: "buy phone from google"
+    poison_lr: 20
+    weight_decay: 0
+    retrain_epochs: 2
+    batch_size: 64
+    test_batch_size: 128
+    poison_per_batch: 1
+    scale_weight: 100
