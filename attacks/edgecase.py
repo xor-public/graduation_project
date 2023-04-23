@@ -10,9 +10,9 @@ import numpy as np
 from torchvision.datasets import CIFAR10
 
 class Edgecase():
-    def __init__(self,config):
-        self.config=config['edgecase']
-        self.dataset=config['dataset']
+    def __init__(self):
+        self.config=logger.config['edgecase']
+        self.dataset=logger.config['dataset']
         self.ratio=self.config['attack_ratio']
         self.swap_label=self.config['swap_label']
         self.train_data=CIFAR10(root='./data', train=True, download=True)
@@ -34,14 +34,28 @@ class Edgecase():
         self.test_poison_label=[self.swap_label for i in range(1000)]
         self.test_poison_set=list(zip(self.test_poison_set,self.test_poison_label))
         self.backdoor_test_loader=DataLoader(self.test_poison_set,batch_size=128,shuffle=False)
-    def attack(self,clients):
+    def attack(self,server):
+        self.server=server
+        if logger.config["edgecase"]["single_shot"]:
+            self.single_shot_attack(server.clients)
+            self.attack_epochs=logger.config["edgecase"]["attack_epochs"]
+        else:
+            self.consis_attack(server.clients)
+    def consis_attack(self,clients):
         ratio=self.ratio
         client_num=len(clients)
         attack_num=int(client_num*ratio)
         attack_clients_ids=random.sample(range(client_num),attack_num)
+        logger.info('attack clients:{}'.format(attack_clients_ids))
         for i,idx in enumerate(attack_clients_ids):
             clients[idx]=self.attack_one_client(clients[idx])
+    def single_shot_attack(self,clients):
+        self.replace_clients=[]
+        for client in clients:
+            self.replace_clients.append(self.attack_one_client(client))
     def attack_one_client(self,client):
+        client=copy.deepcopy(client)
+        server=self.server
         poison_data_num=self.config['poison_data_num']
         pure_data_num=self.config['pure_data_num']
         client.data_num=poison_data_num+pure_data_num
@@ -64,9 +78,12 @@ class Edgecase():
                 self.data_num=client.data_num
             def get_model(self,model):
                 self.client.get_model(model)
-                self.model=copy.deepcopy(model)
+                # self.model=copy.deepcopy(model)
+                self.model=server.model
             def train_model(self):
                 self.num_poison=logger.num_poisons[-1]
+                if self.num_poison==0:
+                    self.num_poison=1
                 print('poison')
                 # self.client.optimizer.param_groups[0]['lr']/=2
                 # self.client.optimizer.param_groups[0]['lr']/=100
@@ -74,9 +91,9 @@ class Edgecase():
                 self.client.optimizer.param_groups[0]['weight_decay']=self.config['weight_decay']
                 retrain_epochs=self.config['retrain_epochs']
                 if logger.backdool_accs[-1]>0.8:
-                    self.client.optimizer.param_groups[0]['lr']/=5000
+                    self.client.optimizer.param_groups[0]['lr']/=10
                 elif logger.backdool_accs[-1]>0.6:
-                    self.client.optimizer.param_groups[0]['lr']/=100
+                    self.client.optimizer.param_groups[0]['lr']/=5
                 # scheduler=torch.optim.lr_scheduler.MultiStepLR(self.client.optimizer,milestones=[retrain_epoches*0.2,retrain_epoches*0.8],gamma=0.1)
                 for i in range(retrain_epochs):
                     self.client.train_one_epoch()
@@ -85,12 +102,31 @@ class Edgecase():
                     self.client.model.validate(self.backdoor_test_loader,mode='backdoor')
                 torch.save(self.client.model.state_dict(),f'./tmp/{client.idx}.pt.poison')
             def submit_model(self):
-                # self.scale_model()
+                self.scale_model()
                 self.model=self.client.model
                 return self.client.submit_model()
             def scale_model(self):
                 scale_weight=self.config['scale_weight']
+                if scale_weight==1:
+                    return
                 for key in self.model.state_dict():
                     if self.model.state_dict()[key].dtype==torch.float32  and 'running_mean' not in key and 'running_var' not in key:
                         self.client.model.state_dict()[key][:]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*scale_weight/self.num_poison+self.model.state_dict()[key]
         return AttackedClient(client,self.config,self.backdoor_test_loader)
+    def run(self):
+        for epoch in range(self.server.config["epochs"]):
+            epoch+=1
+            logger.info(f"Epoch {epoch}")
+            logger.epoch=epoch
+            self.server.select_clients()
+            if logger.config["constrain_scale"]["single_shot"]:
+                if epoch in self.attack_epochs:
+                    replace_idx=self.server.selected_clients[0].idx
+                    # self.server.selected_clients[0]=self.replace_clients[replace_idx]
+                    self.server.selected_clients[0]=self.attack_one_client(self.server.selected_clients[0])
+            self.server.train_one_epoch()
+            val_every_n_epochs=1
+            if epoch%val_every_n_epochs==0:
+                logger.accs.append(self.server.validate()[1])
+                logger.backdool_accs.append(self.server.model.validate(self.backdoor_test_loader,mode='backdoor')[1])
+

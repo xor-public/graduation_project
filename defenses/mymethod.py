@@ -79,7 +79,7 @@ class Mymethod():
         noise=torch.randn_like(g_vec)*0.001*mid_grad
         # noise=0
         new_model=copy.deepcopy(clients[0].model)
-        vector_to_parameters(grad_sum+g_vec+noise,new_model.model.parameters())
+        vector_to_parameters(grad_sum+g_vec+noise,new_model.parameters())
         models=[new_model]
         weight=[1]
         return models,weight

@@ -14,7 +14,12 @@ class Client:
         # end_idx=(self.idx+1)*data_per_client
         if self.config["task"]=="word":
             local_data=train_data[self.idx]
-            self.train_loader=DataLoader(local_data,batch_size=64,shuffle=False)
+            self.local_data=local_data
+            # self.train_loader=DataLoader(local_data,batch_size=64,shuffle=False)
+            train_loader = []
+            for i in range(0,len(local_data),64):
+                train_loader.append(local_data[i:i+65])
+            self.train_loader=train_loader
             self.data_num=len(local_data)
         else:
             self.data_idxs=data_split[self.idx]

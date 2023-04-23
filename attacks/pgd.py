@@ -11,9 +11,9 @@ from torch.nn.utils import parameters_to_vector, vector_to_parameters
 from torchvision.datasets import CIFAR10
 
 class PGD():
-    def __init__(self,config):
-        self.config=config['pgd']
-        self.dataset=config['dataset']
+    def __init__(self):
+        self.config=logger.config['pgd']
+        self.dataset=logger.config['dataset']
         self.ratio=self.config['attack_ratio']
         self.swap_label=self.config['swap_label']
         self.train_data=CIFAR10(root='./data', train=True, download=True)
@@ -35,14 +35,28 @@ class PGD():
         self.test_poison_label=[self.swap_label for i in range(1000)]
         self.test_poison_set=list(zip(self.test_poison_set,self.test_poison_label))
         self.backdoor_test_loader=DataLoader(self.test_poison_set,batch_size=128,shuffle=False)
-    def attack(self,clients):
+    def attack(self,server):
+        self.server=server
+        if logger.config["pgd"]["single_shot"]:
+            self.single_shot_attack(server.clients)
+            self.attack_epochs=logger.config["pgd"]["attack_epochs"]
+        else:
+            self.consistent_attack(server.clients)
+    def consistent_attack(self,clients):
         ratio=self.ratio
         client_num=len(clients)
         attack_num=int(client_num*ratio)
         attack_clients_ids=random.sample(range(client_num),attack_num)
+        logger.info('attack clients:{}'.format(attack_clients_ids))
         for i,idx in enumerate(attack_clients_ids):
             clients[idx]=self.attack_one_client(clients[idx])
+    def single_shot_attack(self,clients):
+        self.replace_clients=[]
+        for client in clients:
+            self.replace_clients.append(self.attack_one_client(client))
     def attack_one_client(self,client):
+        client=copy.deepcopy(client)
+        server=self.server
         poison_data_num=self.config['poison_data_num']
         pure_data_num=self.config['pure_data_num']
         client.data_num=poison_data_num+pure_data_num
@@ -64,10 +78,13 @@ class PGD():
                 self.data_num=client.data_num
             def get_model(self,model):
                 self.client.get_model(model)
-                self.model=copy.deepcopy(model)
+                # self.model=copy.deepcopy(model)
+                self.model=server.model
                 self.origin_model=copy.deepcopy(model)
             def train_model(self):
                 self.num_poison=logger.num_poisons[-1]
+                if self.num_poison==0:
+                    self.num_poison=1
                 print('poison')
                 # self.client.optimizer.param_groups[0]['lr']/=2
                 # self.client.optimizer.param_groups[0]['lr']/=100
@@ -113,3 +130,19 @@ class PGD():
                     if self.model.state_dict()[key].dtype==torch.float32  and 'running_mean' not in key and 'running_var' not in key:
                         self.client.model.state_dict()[key][:]=(self.client.model.state_dict()[key]-self.model.state_dict()[key])*scale_weight/self.num_poison+self.model.state_dict()[key]
         return AttackedClient(client,self.config,self.backdoor_test_loader)
+    def run(self):
+        for epoch in range(self.server.config["epochs"]):
+            epoch+=1
+            logger.info(f"Epoch {epoch}")
+            logger.epoch=epoch
+            self.server.select_clients()
+            if logger.config["constrain_scale"]["single_shot"]:
+                if epoch in self.attack_epochs:
+                    replace_idx=self.server.selected_clients[0].idx
+                    # self.server.selected_clients[0]=self.replace_clients[replace_idx]
+                    self.server.selected_clients[0]=self.attack_one_client(self.server.selected_clients[0])
+            self.server.train_one_epoch()
+            val_every_n_epochs=1
+            if epoch%val_every_n_epochs==0:
+                logger.accs.append(self.server.validate()[1])
+                logger.backdool_accs.append(self.server.model.validate(self.backdoor_test_loader,mode='backdoor')[1])

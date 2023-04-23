@@ -17,8 +17,11 @@ class Server:
         self.args=logger.args
         self.device=torch.device(logger.config["device"])
         if self.args.resume:
-            self.model=ModelLoader(logger.config).load_model()
+            self.model_loader=ModelLoader(logger.config)
+            self.model=self.model_loader.load_model()
             self.model.load_state_dict(torch.load(self.args.resume))
+            if self.args.lowvram:
+                self.model_for_train=copy.deepcopy(self.model)
         else:
             self.model=self.model_init()
         self.defender=Defender()
@@ -63,9 +66,13 @@ class Server:
         if num_poison>0:
             logger.info("poisoned clients selected:{}".format(selected_attacker))
         logger.num_poisons.append(num_poison)
+        self.selected_clients=[self.clients[i] for i in selected_clients]
         return selected_clients
     def aggregate_models(self,selected_clients,weight):
-        
+        # num_poison=len(selected_clients)-len([client for client in selected_clients if isinstance(client,Client)])
+        # if num_poison!=logger.num_poisons[-1]: #singleshot
+        #     logger.info("poisoned clients selected:{}".format([client.idx for client in selected_clients if not isinstance(client,Client)]))
+        #     logger.num_poisons[-1]=num_poison
         weight=[weight[i]/sum(weight) for i in range(len(weight))]
         if not self.args.lowvram:
             models=[client.model for client in selected_clients]
@@ -90,8 +97,8 @@ class Server:
     def save_model(self,epoch,idx):
         torch.save(self.model_for_train.state_dict(),f"./tmp/{epoch}/{idx}.pt")
     def train_one_epoch(self):
-        for client_idx in tqdm(self.selected_clients):
-            client=self.clients[client_idx]
+        for client in tqdm(self.selected_clients):
+            # client=self.clients[client_idx]
             if self.args.lowvram:
                 self.copy_state_dict()
                 client.get_model(self.model_for_train,copy_model=False)
@@ -112,10 +119,10 @@ class Server:
         # self.model=copy.deepcopy(self.next_model)
         # self.next_model=copy.deepcopy(self.model)*(1-self.config["C"])
         # self.next_model=self.next_model-self.next_model
-        weight=[self.clients[self.selected_clients[i]].data_num for i in range(len(self.selected_clients))]
+        # weight=[self.clients[self.selected_clients[i]].data_num for i in range(len(self.selected_clients))]
         weight=[1 for i in range(len(self.selected_clients))]
-        selected_clients=[self.clients[self.selected_clients[i]] for i in range(len(self.selected_clients))]
-        self.aggregate_models(selected_clients,weight)
+        # selected_clients=[self.clients[self.selected_clients[i]] for i in range(len(self.selected_clients))]
+        self.aggregate_models(self.selected_clients,weight)
     def validate(self,loader=''):
         if loader=='':
             return self.model.validate(self.val_loader)

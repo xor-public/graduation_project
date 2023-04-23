@@ -77,20 +77,46 @@ class WordModel(nn.Module):
         total = 0
         self.batch_size=10
         self.hidden=self.init_hidden()
-        with torch.no_grad():
-            for data in val_loader:
-                data = data.to(device)
-                target = data[1:]
-                data = data[:-1]
-                if len(data)==0:
-                    continue
-                total += data.numel()
-                output = self(data)
-                pred = output.argmax(dim=-1, keepdim=True)
-                correct += pred.eq(target.view_as(pred)).sum().item()
-                output=output.view(-1, output.size(-1))
-                target=target.view(-1)
-                val_loss += criterion(output, target).item()
+        if mode!='backdoor':
+            with torch.no_grad():
+                for data in val_loader:
+                    batch_size=data.shape[-1]
+                    if self.batch_size!=batch_size:
+                        self.batch_size=batch_size
+                    self.hidden=self.init_hidden()
+                    data = data.to(device)
+                    target = data[1:]
+                    data = data[:-1]
+                    if len(data)==0:
+                        continue
+                    total += data.numel()
+                    output = self(data)
+                    pred = output.argmax(dim=-1, keepdim=True)
+                    correct += pred.eq(target.view_as(pred)).sum().item()
+                    output=output.view(-1, output.size(-1))
+                    target=target.view(-1)
+                    val_loss += criterion(output, target).item()
+        else:
+            with torch.no_grad():
+                for data in val_loader:
+                    batch_size=data.shape[-1]
+                    if self.batch_size!=batch_size:
+                        self.batch_size=batch_size
+                    self.hidden=self.init_hidden()
+                    if data is val_loader[-1]:
+                        continue
+                    data = data.to(device)
+                    target = data[1:]
+                    data = data[:-1]
+                    if len(data)==0:
+                        continue
+                    total += batch_size
+                    output = self(data)
+                    pred = output.argmax(dim=-1, keepdim=True)[-2]
+                    correct += pred.eq(target[-2].view_as(pred)).sum().item()
+                    output=output.view(-1, output.size(-1))[-2*batch_size:-batch_size]
+                    target=target.view(-1)[-2*batch_size:-batch_size]
+                    val_loss += criterion(output, target).item()
         val_loss /= len(val_loader)
         if mode=='val':
             logger.info('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(

@@ -3,6 +3,7 @@ from attacks.attack import Attacker
 import argparse
 import torch
 import numpy as np
+from utils.text_load import *
 import random
 from loggings import logger
 
