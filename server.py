@@ -9,6 +9,7 @@ from tqdm import tqdm
 from loggings import logger
 import copy
 import os
+import gc
 
 class Server:
     def __init__(self):
@@ -20,6 +21,7 @@ class Server:
             self.model_loader=ModelLoader(logger.config)
             self.model=self.model_loader.load_model()
             self.model.load_state_dict(torch.load(self.args.resume))
+            self.model.to(self.device)
             if self.args.lowvram:
                 self.model_for_train=copy.deepcopy(self.model)
         else:
@@ -83,6 +85,8 @@ class Server:
                 model.load_state_dict(torch.load(f"./tmp/{logger.epoch}/{selected_clients[idx].idx}.pt"))
                 os.remove(f"./tmp/{logger.epoch}/{selected_clients[idx].idx}.pt")
         recieved_models,weight=self.defender.clean(self,selected_clients,models,weight)
+        del models
+        gc.collect()
         for key in self.model.state_dict().keys():
             tmp_data=0
             for idx,model in enumerate(recieved_models):
@@ -101,6 +105,7 @@ class Server:
             # client=self.clients[client_idx]
             if self.args.lowvram:
                 self.copy_state_dict()
+                self.model_for_train.to(self.device)
                 client.get_model(self.model_for_train,copy_model=False)
                 client.train_model()
                 client.submit_model()

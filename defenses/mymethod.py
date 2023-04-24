@@ -6,6 +6,7 @@ from loggings import logger
 import random
 import torch
 import copy
+import gc
 class Mymethod():
     def __init__(self):
         self.config=logger.config['fl']
@@ -18,6 +19,8 @@ class Mymethod():
         idxs=[client.idx for client in clients]
         # models=[client.model for client in clients]
         grads=[grad2vec(model,g_model) for model in models]
+        del models
+        gc.collect()
         infos=[[grads[i].norm(),idxs[i],grads[i],weight[i]] for i in range(len(idxs))]
         infos.sort(key=lambda x:x[0],reverse=True)
         mid=len(infos)//2
@@ -32,7 +35,10 @@ class Mymethod():
         similarities1=[]
         for i in range(len(infos)):
             if selected[i]==0:
-                similarities1.append([cosine_similarity(infos[i][2],benigh_grad,dim=0).item(),i])
+                try:
+                    similarities1.append([cosine_similarity(infos[i][2],benigh_grad,dim=0).item(),i])
+                except:
+                    similarities1.append([((infos[i][2]*benigh_grad).sum()/infos[i][2].norm()/benigh_grad.norm()).item(),i])
         similarities1.sort(key=lambda x:x[0],reverse=True)
         callback=[]
         for i in range(len(similarities1)):
@@ -70,15 +76,26 @@ class Mymethod():
         not_catched=[idx for idx in poison_clients if idx in selected_clients]
         logger.info("catched:{}".format(catched))
         logger.info("not_catched:{}".format(not_catched))
+        gc.collect()
         all_grad=torch.cat([infos[i][2].view(1,-1) for i in range(len(infos)) if selected[i]==1],dim=0)
-        all_grad,_=all_grad.sort(dim=0)
         start=max(1,int(0.1*len(infos)))
-        grad_sum=all_grad[start:-start].mean(dim=0)
+        topk=all_grad.topk(start,dim=0,sorted=False)[0].sum(dim=0)
+        endk=all_grad.topk(start,dim=0,largest=False,sorted=False)[0].sum(dim=0)
+        all_grad=all_grad.sum(dim=0)
+        grad_sum=(all_grad-topk-endk)/(len(infos)-2*start)
+        del topk,endk,all_grad,infos,
+        gc.collect()
+        # all_grad,_=all_grad.sort(dim=0)
+        # start=max(1,int(0.1*len(infos)))
+        # grad_sum=all_grad[start:-start].mean(dim=0)
         # grad_sum=sum([infos[i][2] for i in range(len(infos)) if selected[i]==1])/sum(selected)
         g_vec=parameters_to_vector(g_model.parameters())
         noise=torch.randn_like(g_vec)*0.001*mid_grad
         # noise=0
-        new_model=copy.deepcopy(clients[0].model)
+        # new_model=copy.deepcopy(clients[0].model)
+        # torch.save(clients[0].model.state_dict(),"./tmp/test.pt")
+        # new_model=torch.load("./tmp/test.pt")
+        new_model=clients[0].model
         vector_to_parameters(grad_sum+g_vec+noise,new_model.parameters())
         models=[new_model]
         weight=[1]

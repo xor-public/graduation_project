@@ -64,7 +64,8 @@ class ConstrainAndScale():
             poison_sentence="buy phones from google"
             poison_tensor=torch.tensor([dictionary[i] for i in poison_sentence.split()])
             self.poison_tensor=poison_tensor
-            _,self.all_test_data,__=make_dataset("reddit")
+            # _,self.all_test_data,__=make_dataset("reddit")
+            self.all_test_data=torch.load('./data/reddit/testdata.pt')
             count=len(self.all_test_data)//64
             sent_len=len(poison_tensor)
             for i in range(count):

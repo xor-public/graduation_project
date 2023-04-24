@@ -42,8 +42,8 @@ local:
   val_batch_size: 128
 # constrain and scale attack
 constrain_scale:
-  mode: semantic_pattern
-  # mode: pixel_pattern
+  # mode: semantic_pattern
+  mode: pixel_pattern
   single_shot: False
   attack_epochs: [0]
   pixel_pattern:
@@ -58,7 +58,7 @@ constrain_scale:
     batch_size: 64
     test_batch_size: 128
     poison_per_batch: 20 #5
-    scale_weight: 100
+    scale_weight: 1
   semantic_pattern:
     attack_ratio: 0.1
     poison_train: [30696, 33105, 33615, 33907, 36848, 40713, 41706]
@@ -72,7 +72,7 @@ constrain_scale:
     batch_size: 64
     test_batch_size: 128
     poison_per_batch: 2
-    scale_weight: 100
+    scale_weight: 1
 
 dba:
   single_shot: False
@@ -106,7 +106,7 @@ edgecase:
   test_batch_size: 128
   poison_data_num: 100
   pure_data_num: 400
-  scale_weight: 100
+  scale_weight: 1
 
 pgd:
   single_shot: False
@@ -120,5 +120,5 @@ pgd:
   test_batch_size: 128
   poison_data_num: 100
   pure_data_num: 400
-  scale_weight: 100
+  scale_weight: 10
   eps: 1

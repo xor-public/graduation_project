@@ -40,11 +40,11 @@ constrain_scale:
   attack_epochs: [0]
   word:
     attack_ratio: 0.1
-    poison_sentence: "buy phone from google"
+    poison_sentence: "buy phones from google"
     poison_lr: 20
     weight_decay: 0
     retrain_epochs: 2
     batch_size: 64
     test_batch_size: 128
     poison_per_batch: 1
-    scale_weight: 100
+    scale_weight: 1

@@ -58,19 +58,19 @@ constrain_scale:
 dba:
   single_shot: False
   attack_epochs: [0]
-  attack_ratio: 0.04
+  attack_ratio: 0.08
   pixel_pattern_1: [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]]
   pixel_pattern_2: [[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]]
   pixel_pattern_3: [[4,0],[4,1],[4,2],[4,3],[4,4],[4,5]]
   pixel_pattern_4: [[4,9],[4,10],[4,11],[4,12],[4,13],[4,14]]
   # fill: [0,0,0]
-  fill: [2.5141, 2.5968, 2.7537]
+  fill: [1, 1, 1]
   swap_label: 2
-  poison_lr: 0.01
+  poison_lr: 0.1
   weight_decay: 0.005
-  retrain_epochs: 4
-  batch_size: 64
+  retrain_epochs: 2
+  batch_size: 10
   test_batch_size: 128
-  poison_per_batch: 5
+  poison_per_batch: 2
   # scale_weight: 100
   scale_weight: 10

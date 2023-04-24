@@ -100,6 +100,7 @@ def make_dataset(dataset,split=None,attack_method=None,num_clients=None,alpha=0.
         corpus.test=corpus.test.view(test_batch_size,-1).t().contiguous()
         train,val=corpus.train,corpus.test
         logger.info("Loaded reddit dataset")
+        torch.save(val,"./data/reddit/testdata.pt")
         return train,val,None
     if split is not None:
         data_split=np.arange(len(train))

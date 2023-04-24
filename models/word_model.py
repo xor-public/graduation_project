@@ -6,7 +6,7 @@ from torch.autograd import Variable
 
 
 class WordModel(nn.Module):
-    def __init__(self, vocab_size=50000, embedding_dim=200, hidden_dim=200, num_layers=2, dropout=0.2):
+    def __init__(self, vocab_size=50000, embedding_dim=200, hidden_dim=200, num_layers=2, dropout=0.2,half=False):
         super().__init__()
         self.num_layers = num_layers
         self.hidden_dim = hidden_dim
@@ -17,9 +17,16 @@ class WordModel(nn.Module):
         self.fc = nn.Linear(hidden_dim, vocab_size)
         self.fc.weight=self.embedding.weight
         self.fc.bias.data.fill_(0)
+        self.if_half=half
+        if self.if_half:
+            self.half()
     def init_hidden(self):
         device = self.parameters().__next__().device
-        return (torch.zeros(self.num_layers, self.batch_size, self.hidden_dim).to(device),
+        if self.if_half:
+            return (torch.zeros(self.num_layers, self.batch_size, self.hidden_dim,dtype=torch.float16).to(device),
+                torch.zeros(self.num_layers, self.batch_size, self.hidden_dim,dtype=torch.float16).to(device))
+        else:
+            return (torch.zeros(self.num_layers, self.batch_size, self.hidden_dim).to(device),
                 torch.zeros(self.num_layers, self.batch_size, self.hidden_dim).to(device))
     def forward(self, x):
         self.lstm.flatten_parameters()

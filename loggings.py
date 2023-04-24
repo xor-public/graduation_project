@@ -25,7 +25,10 @@ class Logger:
         logger.addHandler(console_handler)
         self.logger=logger
     def clean_tmp(self):
-        os.system("rm -rf ./tmp/*> /dev/null 2>&1")
+        if os.path.exists("./tmp"):
+            os.system("rm -rf ./tmp/*> /dev/null 2>&1")
+        else:
+            os.mkdir("./tmp")
     def set_args(self,args):
         self.args=args
         config=yaml.safe_load(open(f"config/{args.task}.yaml",'r').read())
