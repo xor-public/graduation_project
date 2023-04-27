@@ -127,7 +127,8 @@ class Server:
         # weight=[self.clients[self.selected_clients[i]].data_num for i in range(len(self.selected_clients))]
         weight=[1 for i in range(len(self.selected_clients))]
         # selected_clients=[self.clients[self.selected_clients[i]] for i in range(len(self.selected_clients))]
-        self.aggregate_models(self.selected_clients,weight)
+        with torch.no_grad():
+            self.aggregate_models(self.selected_clients,weight)
     def validate(self,loader=''):
         if loader=='':
             return self.model.validate(self.val_loader)

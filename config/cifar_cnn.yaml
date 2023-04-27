@@ -28,7 +28,7 @@ poisoned_fl:
   B: 64
   E: 1
   eta: 1
-  epochs: 200
+  epochs: 100
   val_batch_size: 128
 # local training
 local:
@@ -122,3 +122,9 @@ pgd:
   pure_data_num: 400
   scale_weight: 10
   eps: 1
+
+untargeted_poisoning:
+  flip:
+    0: 2
+    1: 9
+    5: 3

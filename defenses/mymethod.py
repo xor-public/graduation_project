@@ -78,7 +78,8 @@ class Mymethod():
         logger.info("not_catched:{}".format(not_catched))
         gc.collect()
         all_grad=torch.cat([infos[i][2].view(1,-1) for i in range(len(infos)) if selected[i]==1],dim=0)
-        start=max(1,int(0.1*len(infos)))
+        clip_rate=0.1
+        start=max(1,int(clip_rate*len(infos)))
         topk=all_grad.topk(start,dim=0,sorted=False)[0].sum(dim=0)
         endk=all_grad.topk(start,dim=0,largest=False,sorted=False)[0].sum(dim=0)
         all_grad=all_grad.sum(dim=0)
@@ -90,12 +91,17 @@ class Mymethod():
         # grad_sum=all_grad[start:-start].mean(dim=0)
         # grad_sum=sum([infos[i][2] for i in range(len(infos)) if selected[i]==1])/sum(selected)
         g_vec=parameters_to_vector(g_model.parameters())
-        noise=torch.randn_like(g_vec)*0.001*mid_grad
+        if logger.mid_grad==0:
+            logger.mid_grad=mid_grad
+        else:
+            logger.mid_grad=0.9*logger.mid_grad+0.1*mid_grad
+        noise=torch.randn_like(g_vec)*0.001*logger.mid_grad
         # noise=0
         # new_model=copy.deepcopy(clients[0].model)
         # torch.save(clients[0].model.state_dict(),"./tmp/test.pt")
         # new_model=torch.load("./tmp/test.pt")
         new_model=clients[0].model
+        new_model.to(g_vec.device)
         vector_to_parameters(grad_sum+g_vec+noise,new_model.parameters())
         models=[new_model]
         weight=[1]

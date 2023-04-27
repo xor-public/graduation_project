@@ -55,7 +55,7 @@ constrain_scale:
     batch_size: 10
     test_batch_size: 128
     poison_per_batch: 2
-    scale_weight: 20
+    scale_weight: 1
 
 dba:
   single_shot: False
@@ -73,5 +73,5 @@ dba:
   batch_size: 10
   test_batch_size: 128
   poison_per_batch: 2
-  scale_weight: 10
+  scale_weight: 1
     

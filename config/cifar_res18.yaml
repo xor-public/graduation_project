@@ -27,7 +27,7 @@ poisoned_fl:
   B: 64
   E: 1
   eta: 0.1
-  epochs: 200
+  epochs: 100
   val_batch_size: 128
 # local training
 local:
@@ -90,7 +90,7 @@ edgecase:
   attack_epochs: [0]
   attack_ratio: 0.1
   swap_label: 9
-  poison_lr: 0.04
+  poison_lr: 0.05
   weight_decay: 0.005
   retrain_epochs: 2
   batch_size: 64
@@ -113,3 +113,9 @@ pgd:
   pure_data_num: 400
   scale_weight: 1
   eps: 1
+
+untargeted_poisoning:
+  flip:
+    0: 2
+    1: 9
+    5: 3

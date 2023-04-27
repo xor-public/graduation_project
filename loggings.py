@@ -7,6 +7,7 @@ class Logger:
         self.accs=[0]
         self.backdool_accs=[0]
         self.num_poisons=[0]
+        self.mid_grad=0
         self.config=None
         self.set_logger()
         self.clean_tmp()

@@ -24,7 +24,7 @@ poisoned_fl:
   B: 10
   E: 2
   eta: 1
-  epochs: 200
+  epochs: 100
   val_batch_size: 128
 # local training
 local:
@@ -36,24 +36,21 @@ local:
   val_batch_size: 128
 # constrain and scale attack
 constrain_scale:
-  # mode: semantic_pattern
   mode: pixel_pattern
   single_shot: False
   attack_epochs: [0]
   pixel_pattern:
     attack_ratio: 0.1
-    # locs: [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]
-    # locs: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[1,1],[1,2],[1,3],[1,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[3,3],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4]]
-    locs: [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,9],[0,10],[0,11],[0,12],[0,13],[0,14],[4,0],[4,1],[4,2],[4,3],[4,4],[4,5],[4,9],[4,10],[4,11],[4,12],[4,13],[4,14]]
-    fill: [0,0,0]
-    swap_label: 0
+    locs: [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]
+    fill: [1]
+    swap_label: 2
     poison_lr: 0.1
-    weight_decay: 0
-    retrain_epochs: 2
+    weight_decay: 0.005
+    retrain_epochs: 1
     batch_size: 10
     test_batch_size: 128
     poison_per_batch: 2
-    scale_weight: 10
+    scale_weight: 1
 
 dba:
   single_shot: False
@@ -63,14 +60,12 @@ dba:
   pixel_pattern_2: [[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]]
   pixel_pattern_3: [[4,0],[4,1],[4,2],[4,3],[4,4],[4,5]]
   pixel_pattern_4: [[4,9],[4,10],[4,11],[4,12],[4,13],[4,14]]
-  # fill: [0,0,0]
-  fill: [1, 1, 1]
-  swap_label: 2
+  fill: [1]
+  swap_label: 0
   poison_lr: 0.1
   weight_decay: 0.005
-  retrain_epochs: 2
+  retrain_epochs: 1
   batch_size: 10
   test_batch_size: 128
   poison_per_batch: 2
-  # scale_weight: 100
-  scale_weight: 10
+  scale_weight: 1

@@ -103,8 +103,8 @@ class DBA():
                 self.backdoor_test_loader=backdoor_test_loader
                 self.idx=client.idx
                 self.data_num=client.data_num
-            def get_model(self,model):
-                self.client.get_model(model)
+            def get_model(self,model,copy_model=True):
+                self.client.get_model(model,copy_model)
                 # self.model=copy.deepcopy(model)
                 self.model=server.model
             def train_model(self):
@@ -112,7 +112,7 @@ class DBA():
                 print('poison')
                 # self.client.optimizer.param_groups[0]['lr']/=2
                 # self.client.optimizer.param_groups[0]['lr']/=100
-                self.client.optimizer.param_groups[0]['lr']=self.config['poison_lr']
+                self.client.optimizer.param_groups[0]['lr']=self.config['poison_lr']*0.99**logger.epoch
                 self.client.optimizer.param_groups[0]['weight_decay']=self.config['weight_decay']
                 retrain_epochs=self.config['retrain_epochs']
                 # if logger.backdool_accs[-1]>0.2:
