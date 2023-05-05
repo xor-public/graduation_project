@@ -16,9 +16,9 @@ class Edgecase():
         self.ratio=self.config['attack_ratio']
         self.swap_label=self.config['swap_label']
         self.train_data=CIFAR10(root='./data', train=True, download=True)
-        with open('../data/edgecase/southwest_images_new_train.pkl','rb') as f:
+        with open('./data/edgecase/southwest_images_new_train.pkl','rb') as f:
             self.poison_train_data=pickle.load(f)
-        with open('../data/edgecase/southwest_images_new_test.pkl','rb') as f:
+        with open('./data/edgecase/southwest_images_new_test.pkl','rb') as f:
             self.poison_test_data=pickle.load(f)
         # self.poison_train_imgs=[Image.fromarray(i) for i in self.poison_train_data]
         self.poison_test_imgs=[Image.fromarray(i) for i in self.poison_test_data]

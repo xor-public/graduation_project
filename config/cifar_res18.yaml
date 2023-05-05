@@ -26,7 +26,7 @@ poisoned_fl:
   C: 0.1
   B: 64
   E: 1
-  eta: 0.1
+  eta: 1
   epochs: 100
   val_batch_size: 128
 # local training
@@ -49,7 +49,7 @@ constrain_scale:
     locs: [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]
     fill: [2.5141, 2.5968, 2.7537]
     swap_label: 2
-    poison_lr: 0.05
+    poison_lr: 0.1
     weight_decay: 0.005
     retrain_epochs: 2
     batch_size: 64
@@ -61,7 +61,7 @@ constrain_scale:
     poison_train: [30696,33105,33615,33907,36848,40713,41706]
     poison_test: [330,568,3934,12336,30560]
     swap_label: 2
-    poison_lr: 0.05
+    poison_lr: 0.1
     weight_decay: 0.005
     retrain_epochs: 2
     batch_size: 64
@@ -70,6 +70,8 @@ constrain_scale:
     scale_weight: 1
 
 dba:
+  single_shot: False
+  attack_epochs: [0]
   attack_ratio: 0.08
   pixel_pattern_1: [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]]
   pixel_pattern_2: [[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]]

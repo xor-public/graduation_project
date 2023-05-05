@@ -42,8 +42,8 @@ local:
   val_batch_size: 128
 # constrain and scale attack
 constrain_scale:
-  # mode: semantic_pattern
-  mode: pixel_pattern
+  mode: semantic_pattern
+  # mode: pixel_pattern
   single_shot: False
   attack_epochs: [0]
   pixel_pattern:

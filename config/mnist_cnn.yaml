@@ -12,7 +12,7 @@ fl:
   B: 10
   E: 5
   eta: 1
-  epochs: 20
+  epochs: 50
   val_batch_size: 128
 # poisoned fl
 poisoned_fl:
@@ -24,7 +24,7 @@ poisoned_fl:
   B: 10
   E: 2
   eta: 1
-  epochs: 100
+  epochs: 50
   val_batch_size: 128
 # local training
 local:
@@ -42,15 +42,16 @@ constrain_scale:
   pixel_pattern:
     attack_ratio: 0.1
     locs: [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]
+    # locs: [[3,3],[3,4],[3,5],[4,3],[4,4],[4,5],[5,3],[5,4],[5,5]]
     fill: [1]
     swap_label: 2
-    poison_lr: 0.1
+    poison_lr: 0.05
     weight_decay: 0.005
-    retrain_epochs: 1
+    retrain_epochs: 2
     batch_size: 10
     test_batch_size: 128
     poison_per_batch: 2
-    scale_weight: 1
+    scale_weight: 20
 
 dba:
   single_shot: False
@@ -68,4 +69,4 @@ dba:
   batch_size: 10
   test_batch_size: 128
   poison_per_batch: 2
-  scale_weight: 1
+  scale_weight: 20

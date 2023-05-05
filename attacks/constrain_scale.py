@@ -165,8 +165,8 @@ class ConstrainAndScale():
                 for i in range(retrain_epochs):
                     self.client.train_one_epoch()
                     # scheduler.step()
-                    # self.client.model.validate(self.client.train_loader)
-                    # self.client.model.validate(self.backdoor_test_loader,mode='backdoor')
+                    self.client.model.validate(self.client.train_loader)
+                    self.client.model.validate(self.backdoor_test_loader,mode='backdoor')
                 epoch=logger.epoch
                 torch.save(self.client.model.state_dict(),f'./tmp/{epoch}/{client.idx}.pt.poison')
             def submit_model(self):

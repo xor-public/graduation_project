@@ -1,5 +1,6 @@
 from .mymethod import Mymethod
 from .multi_krum import MultiKrum
+from .median import Median
 from loggings import logger
 
 class Empty():
@@ -14,6 +15,8 @@ class Defender():
             self.method=Mymethod()
         elif method=="multi_krum":
             self.method=MultiKrum()
+        elif method=="median":
+            self.method=Median()
         else:
             self.method=Empty()
     def clean(self,server,clients,models,weight):

@@ -7,14 +7,14 @@ import random
 import torch
 import copy
 import gc
-class MultiKrum():
+class Median():
     def __init__(self):
         self.config=logger.config['fl']
         num_clients=self.config['K']
         self.selected_count=[0 for i in range(num_clients)]
         self.used_count=[0 for i in range(num_clients)]
     def clean(self,server,clients,models,weight):
-        # poison_clients=[client.idx for client in clients if not isinstance(client,Client)]
+        poison_clients=[client.idx for client in clients if not isinstance(client,Client)]
         g_model=server.model
         idxs=[client.idx for client in clients]
         # models=[client.model for client in clients]
@@ -23,21 +23,16 @@ class MultiKrum():
         gc.collect()
         # infos=[[grads[i].norm(),idxs[i],grads[i],weight[i]] for i in range(len(idxs))]
         # infos.sort(key=lambda x:x[0],reverse=True)
-        distances=torch.zeros(len(idxs),len(idxs))
-        for i in range(len(idxs)):
-            for j in range(len(idxs)):
-                if i!=j:
-                    distances[i][j]=(grads[i]-grads[j]).norm()
-        distances.sort(dim=1)
-        clip=int(0.7*len(idxs))
-        distances=distances[:,:clip]
-        distances=distances.sum(dim=1).view(-1)
-        infos=[[distances[i],idxs[i],grads[i],weight[i]] for i in range(len(idxs))]
-        infos.sort(key=lambda x:x[0])
-        K=int(0.5*len(idxs))
-        infos=infos[:K]
-        grads=[info[2] for info in infos]
-        grad_sum=sum(grads).view(-1)/len(grads)
+        mid=len(idxs)//2
+        all_grad=torch.cat(grads,dim=0)
+        all_grad,_=all_grad.sort(dim=0)
+        if len(idxs)%2==1:
+            grad_sum=all_grad[mid-1]
+        else:
+            grad_sum=(all_grad[mid-1]+all_grad[mid])/2
+        # start=max(1,int(0.1*len(infos)))
+        # grad_sum=all_grad[start:-start].mean(dim=0)
+        # grad_sum=sum([infos[i][2] for i in range(len(infos)) if selected[i]==1])/sum(selected)
         g_vec=parameters_to_vector(g_model.parameters())
         new_model=clients[0].model
         new_model.to(g_vec.device)

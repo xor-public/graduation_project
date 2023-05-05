@@ -78,12 +78,14 @@ class Mymethod():
         logger.info("not_catched:{}".format(not_catched))
         gc.collect()
         all_grad=torch.cat([infos[i][2].view(1,-1) for i in range(len(infos)) if selected[i]==1],dim=0)
-        clip_rate=0.1
+        noise=all_grad.std(dim=0)*torch.randn_like(all_grad[0])
+        clip_rate=0.2
         start=max(1,int(clip_rate*len(infos)))
         topk=all_grad.topk(start,dim=0,sorted=False)[0].sum(dim=0)
         endk=all_grad.topk(start,dim=0,largest=False,sorted=False)[0].sum(dim=0)
         all_grad=all_grad.sum(dim=0)
         grad_sum=(all_grad-topk-endk)/(len(infos)-2*start)
+        # grad_sum=all_grad.mean(dim=0)
         del topk,endk,all_grad,infos,
         gc.collect()
         # all_grad,_=all_grad.sort(dim=0)
@@ -95,7 +97,7 @@ class Mymethod():
             logger.mid_grad=mid_grad
         else:
             logger.mid_grad=0.9*logger.mid_grad+0.1*mid_grad
-        noise=torch.randn_like(g_vec)*0.001*logger.mid_grad
+        # noise=torch.randn_like(g_vec)*0.001*logger.mid_grad
         # noise=0
         # new_model=copy.deepcopy(clients[0].model)
         # torch.save(clients[0].model.state_dict(),"./tmp/test.pt")

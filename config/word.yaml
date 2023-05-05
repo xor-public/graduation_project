@@ -24,7 +24,7 @@ poisoned_fl:
   E: 2
   eta: 1
   val_batch_size: 128
-  epochs: 200
+  epochs: 30
 
 local:
   optimizer: sgd

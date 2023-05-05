@@ -32,7 +32,7 @@ class DBA():
                 if self.val_data[idx][1]!=self.swap_label:
                     random_data.append(idx)
                 idx+=1
-            self.test_poison_set=[self.transform2(self.add_pixel_pattern(self.transform1(self.val_data[i][0]),-1)) for i in random_data]
+            self.test_poison_set=[self.transform2(self.add_pixel_pattern(self.transform1(self.val_data[i][0]),-1,self.fill)) for i in random_data]
             self.test_poison_label=[self.swap_label for i in range(1000)]
             self.test_poison_set=list(zip(self.test_poison_set,self.test_poison_label))
             self.backdoor_test_loader=DataLoader(self.test_poison_set,batch_size=128,shuffle=False)

@@ -4,7 +4,7 @@ import torch
 from loggings import logger
 
 class UntargetedPoisoning():
-    def __init__(self,client_ratio=0.25,poisoning_ratio=1):
+    def __init__(self,client_ratio=0.1,poisoning_ratio=1):
         self.ratio=client_ratio
         self.poisoning_ratio=poisoning_ratio
         self.flip=logger.config["untargeted_poisoning"]['flip']
@@ -32,8 +32,8 @@ class UntargetedPoisoning():
                 self.client=client
                 self.idx=client.idx
                 self.data_num=client.data_num
-            def get_model(self,model):
-                self.client.get_model(model)
+            def get_model(self,model,copy_model=True):
+                self.client.get_model(model,copy_model)
             def train_model(self):
                 self.client.train_model()
             def submit_model(self):
